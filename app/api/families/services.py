@@ -12,7 +12,7 @@ from app.api.families.schemas import (
     FamilyResponse,
     UpdateFamilyRequest,
 )
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import BadRequestError, NotFoundError
 from app.models.family import Family
 from app.models.user import User
 
@@ -22,11 +22,14 @@ class FamilyService:
     async def list_families(user: User) -> list[FamilyResponse]:
         if user.role == "Admin":
             families = await Family.find_all().to_list()
-        elif user.family_id:
-            family = await Family.get(PydanticObjectId(user.family_id))
-            families = [family] if family else []
         else:
-            families = []
+            fids = list(user.family_ids or [])
+            if user.family_id and user.family_id not in fids:
+                fids.append(user.family_id)
+            if not fids:
+                return []
+            obj_ids = [PydanticObjectId(fid) for fid in fids if PydanticObjectId.is_valid(fid)]
+            families = await Family.find({"_id": {"$in": obj_ids}}).to_list()
 
         return [FamilyResponse(id=str(f.id), name=f.name) for f in families]
 
@@ -55,7 +58,9 @@ class FamilyService:
 
     @staticmethod
     async def get_family_members(family_id: str) -> list[FamilyMemberResponse]:
-        members = await User.find(User.family_id == family_id, User.is_active == True).to_list()
+        members = await User.find(
+            {"$or": [{"family_ids": family_id}, {"family_id": family_id}], "is_active": True}
+        ).to_list()
         return [
             FamilyMemberResponse(
                 id=str(m.id),
@@ -66,6 +71,7 @@ class FamilyService:
                 isActive=m.is_active,
             )
             for m in members
+            if m.role != "Admin"
         ]
 
     @staticmethod
@@ -78,8 +84,18 @@ class FamilyService:
         if not user or not user.is_active:
             raise NotFoundError("User not found or deactivated")
 
+        if user.role == "Admin":
+            raise BadRequestError("Admins cannot be assigned to a specific family; they have global access to all families.")
+
+        fids = list(user.family_ids or [])
+        if user.family_id and user.family_id not in fids:
+            fids.append(user.family_id)
+        if family_id not in fids:
+            fids.append(family_id)
+
         await user.set(
             {
+                "family_ids": fids,
                 "family_id": family_id,
                 "updated_at": datetime.now(timezone.utc),
             }
@@ -97,12 +113,16 @@ class FamilyService:
     @staticmethod
     async def remove_member(family_id: str, user_id: str) -> dict:
         member = await User.get(PydanticObjectId(user_id))
-        if not member or member.family_id != family_id:
-            raise NotFoundError("Member not found in this family")
+        if not member:
+            raise NotFoundError("User not found")
+
+        fids = [f for f in (member.family_ids or []) if f != family_id]
+        new_primary = fids[0] if fids else None
 
         await member.set(
             {
-                "family_id": None,
+                "family_ids": fids,
+                "family_id": new_primary,
                 "updated_at": datetime.now(timezone.utc),
             }
         )
@@ -114,10 +134,17 @@ class FamilyService:
         if not family:
             raise NotFoundError("Family not found")
 
-        # Unassign any users belonging to this family
-        members = await User.find(User.family_id == family_id).to_list()
-        for m in members:
-            await m.set({"family_id": None, "updated_at": datetime.now(timezone.utc)})
+        affected_users = await User.find(
+            {"$or": [{"family_ids": family_id}, {"family_id": family_id}]}
+        ).to_list()
+        for m in affected_users:
+            fids = [f for f in (m.family_ids or []) if f != family_id]
+            new_primary = fids[0] if fids else None
+            await m.set({
+                "family_ids": fids,
+                "family_id": new_primary,
+                "updated_at": datetime.now(timezone.utc),
+            })
 
         await family.delete()
         return {"id": family_id, "message": "Family deleted and members unassigned"}

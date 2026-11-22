@@ -1,4 +1,4 @@
-﻿"""User model — maps to the 'users' collection in MongoDB."""
+"""User model — maps to the 'users' collection in MongoDB."""
 
 from datetime import datetime, timezone
 from typing import Optional
@@ -12,7 +12,8 @@ class User(Document):
     hashed_password: str
     display_name: str = ""
     role: str = "Hukum"  # Admin | Hukum | Sethji
-    family_id: Optional[str] = None  # MongoDB ObjectId string of the Family
+    family_ids: list[str] = Field(default_factory=list)  # List of MongoDB ObjectId strings of Families
+    family_id: Optional[str] = None  # Active or primary Family ObjectId (backwards compatible)
     avatar_url: Optional[str] = None
     fcm_token: Optional[str] = None
     is_active: bool = True

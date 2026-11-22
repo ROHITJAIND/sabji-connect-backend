@@ -14,7 +14,6 @@ class CreateUserRequest(BaseModel):
     password: str
     display_name: str = ""
     role: str = "Hukum"  # Admin | Hukum | Sethji
-    family_id: Optional[str] = None
 
 
 class AdminUpdateUserRequest(BaseModel):
@@ -22,7 +21,6 @@ class AdminUpdateUserRequest(BaseModel):
     role: Optional[str] = None  # Admin | Hukum | Sethji
     email: Optional[EmailStr] = None
     password: Optional[str] = None
-    family_id: Optional[str] = None
     is_active: Optional[bool] = None
 
 
@@ -41,6 +39,7 @@ class UserResponse(BaseModel):
     email: str
     display_name: str
     role: str
+    family_ids: list[str] = []
     family_id: Optional[str] = None
     avatar_url: Optional[str] = None
     is_active: bool = True
@@ -48,5 +47,8 @@ class UserResponse(BaseModel):
 
 class UpdateProfileRequest(BaseModel):
     display_name: Optional[str] = None
+    avatar_url: Optional[str] = None
+    fcm_token: Optional[str] = None
+    family_id: Optional[str] = None  # Active family switcher
     avatar_url: Optional[str] = None
     fcm_token: Optional[str] = None

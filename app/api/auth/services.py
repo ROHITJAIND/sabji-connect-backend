@@ -27,12 +27,29 @@ from app.api.auth.schemas import (
 class AuthService:
     @staticmethod
     def serialize_user(user: User) -> UserResponse:
+        if user.role == "Admin":
+            return UserResponse(
+                id=str(user.id),
+                email=user.email,
+                display_name=user.display_name,
+                role=user.role,
+                family_ids=[],
+                family_id=None,
+                avatar_url=user.avatar_url,
+                is_active=user.is_active,
+            )
+
+        fids = list(user.family_ids or [])
+        if user.family_id and user.family_id not in fids:
+            fids.append(user.family_id)
+
         return UserResponse(
             id=str(user.id),
             email=user.email,
             display_name=user.display_name,
             role=user.role,
-            family_id=user.family_id,
+            family_ids=fids,
+            family_id=user.family_id or (fids[0] if fids else None),
             avatar_url=user.avatar_url,
             is_active=user.is_active,
         )
@@ -82,6 +99,8 @@ class AuthService:
             update_data["avatar_url"] = body.avatar_url
         if body.fcm_token is not None:
             update_data["fcm_token"] = body.fcm_token
+        if body.family_id is not None:
+            update_data["family_id"] = body.family_id if body.family_id.strip() else None
 
         if update_data:
             update_data["updated_at"] = datetime.now(timezone.utc)
@@ -103,7 +122,8 @@ class AuthService:
             hashed_password=hash_password(body.password),
             display_name=body.display_name or body.email.split("@")[0],
             role=body.role,
-            family_id=body.family_id,
+            family_ids=[],
+            family_id=None,
         )
         await user.insert()
         return AuthService.serialize_user(user)
@@ -111,7 +131,12 @@ class AuthService:
     @staticmethod
     async def list_users(unassigned_only: bool = False) -> list[UserResponse]:
         if unassigned_only:
-            users = await User.find(User.family_id == None, User.is_active == True).to_list()
+            users = await User.find(
+                User.role != "Admin",
+                User.family_id == None,
+                {"$or": [{"family_ids": {"$size": 0}}, {"family_ids": []}, {"family_ids": None}]},
+                User.is_active == True,
+            ).to_list()
         else:
             users = await User.find(User.is_active == True).to_list()
 
@@ -128,6 +153,9 @@ class AuthService:
             update_data["display_name"] = body.display_name.strip()
         if body.role is not None:
             update_data["role"] = body.role
+            if body.role == "Admin":
+                update_data["family_ids"] = []
+                update_data["family_id"] = None
         if body.email is not None and body.email != user.email:
             existing = await User.find_one(User.email == body.email)
             if existing:
@@ -135,8 +163,6 @@ class AuthService:
             update_data["email"] = body.email
         if body.password is not None and body.password.strip():
             update_data["hashed_password"] = hash_password(body.password.strip())
-        if body.family_id is not None:
-            update_data["family_id"] = body.family_id.strip() if body.family_id.strip() else None
         if body.is_active is not None:
             update_data["is_active"] = body.is_active
 
