@@ -1,4 +1,4 @@
-﻿"""Requested Items service — business logic and DB operations."""
+"""Requested Items service — business logic and DB operations."""
 
 from beanie import PydanticObjectId
 
@@ -9,6 +9,7 @@ from app.api.requested_items.schemas import (
 )
 from app.core.exceptions import NotFoundError
 from app.models.catalog import CatalogItem
+from app.models.enums import RequestedItemStatus, UserRole
 from app.models.requested_item import RequestedItem
 from app.models.user import User
 
@@ -28,9 +29,9 @@ class RequestedItemService:
 
     @staticmethod
     async def list_items(user: User) -> list[RequestedItemResponse]:
-        if user.role == "Admin":
+        if user.role == UserRole.ADMIN:
             items = await RequestedItem.find(
-                RequestedItem.status == "pending"
+                RequestedItem.status == RequestedItemStatus.PENDING
             ).to_list()
         else:
             items = await RequestedItem.find(
@@ -46,9 +47,10 @@ class RequestedItemService:
             requested_by=user.display_name or user.email.split("@")[0],
             requested_by_id=str(user.id),
             family_id=user.family_id,
+            status=RequestedItemStatus.PENDING,
         )
         await item.insert()
-        return {"id": str(item.id), "name": item.name, "status": "pending"}
+        return {"id": str(item.id), "name": item.name, "status": RequestedItemStatus.PENDING.value}
 
     @staticmethod
     async def approve_item(
@@ -65,7 +67,7 @@ class RequestedItemService:
         )
         await catalog_item.insert()
 
-        await item.set({"status": "approved"})
+        await item.set({"status": RequestedItemStatus.APPROVED})
 
         return {
             "id": item_id,
@@ -79,5 +81,5 @@ class RequestedItemService:
         if not item:
             raise NotFoundError("Requested item not found")
 
-        await item.set({"status": "rejected"})
+        await item.set({"status": RequestedItemStatus.REJECTED})
         return {"id": item_id, "message": "Rejected"}

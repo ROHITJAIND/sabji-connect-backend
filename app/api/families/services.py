@@ -13,6 +13,7 @@ from app.api.families.schemas import (
     UpdateFamilyRequest,
 )
 from app.core.exceptions import BadRequestError, NotFoundError
+from app.models.enums import UserRole
 from app.models.family import Family
 from app.models.user import User
 
@@ -20,7 +21,7 @@ from app.models.user import User
 class FamilyService:
     @staticmethod
     async def list_families(user: User) -> list[FamilyResponse]:
-        if user.role == "Admin":
+        if user.role == UserRole.ADMIN:
             families = await Family.find_all().to_list()
         else:
             fids = list(user.family_ids or [])
@@ -96,7 +97,7 @@ class FamilyService:
                 isActive=m.is_active,
             )
             for m in members
-            if m.role != "Admin"
+            if m.role != UserRole.ADMIN
         ]
 
     @staticmethod
@@ -109,7 +110,7 @@ class FamilyService:
         if not user or not user.is_active:
             raise NotFoundError("User not found or deactivated")
 
-        if user.role == "Admin":
+        if user.role == UserRole.ADMIN:
             raise BadRequestError("Admins cannot be assigned to a specific family; they have global access to all families.")
 
         # Update Family members list with user's ObjectId

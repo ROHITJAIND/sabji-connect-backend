@@ -1,4 +1,4 @@
-﻿"""Requested Items schemas."""
+"""Requested Items schemas."""
 
 from typing import Optional
 from pydantic import BaseModel, Field

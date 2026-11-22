@@ -1,4 +1,4 @@
-﻿"""Order service — business logic, DB queries, and WS broadcast."""
+"""Order service — business logic, DB queries, and WS broadcast."""
 
 from datetime import datetime, timezone
 from typing import Optional
@@ -11,6 +11,7 @@ from app.api.orders.schemas import (
 )
 from app.api.websocket.services import ws_manager
 from app.core.exceptions import BadRequestError, NotFoundError
+from app.models.enums import OrderStatus, UserRole
 from app.models.order import Order, OrderItem
 from app.models.user import User
 
@@ -34,10 +35,10 @@ class OrderService:
 
     @staticmethod
     async def list_orders(user: User) -> list[OrderResponse]:
-        if user.role == "Admin":
+        if user.role == UserRole.ADMIN:
             orders = await Order.find_all().to_list()
-        elif user.role == "Sethji":
-            filters = {"status": {"$in": ["Published", "Fulfilling", "Archived"]}}
+        elif user.role == UserRole.SETHJI:
+            filters = {"status": {"$in": [OrderStatus.PUBLISHED, OrderStatus.FULFILLING, OrderStatus.ARCHIVED]}}
             if user.family_id:
                 filters["family_id"] = user.family_id
             orders = await Order.find(filters).to_list()
@@ -54,7 +55,7 @@ class OrderService:
             else datetime.now(timezone.utc).strftime("%Y-%m-%d")
         )
         order = Order(
-            status="Draft",
+            status=OrderStatus.DRAFT,
             items=[],
             created_by=str(user.id),
             created_by_name=user.display_name or user.email.split("@")[0],
@@ -117,7 +118,7 @@ class OrderService:
         if not order:
             raise NotFoundError("Order not found")
 
-        if user.role != "Admin" and order.created_by != str(user.id):
+        if user.role != UserRole.ADMIN and order.created_by != str(user.id):
             raise BadRequestError("You can only delete your own orders")
 
         await order.delete()

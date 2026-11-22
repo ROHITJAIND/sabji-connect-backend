@@ -1,4 +1,4 @@
-﻿"""FastAPI dependencies for extracting and verifying the current user.
+"""FastAPI dependencies for extracting and verifying the current user.
 
 Uses standard HTTPBearer security scheme so Swagger UI displays the
 Authorize 🔓 lock button, and works natively with Android (Retrofit/OkHttp/Ktor)

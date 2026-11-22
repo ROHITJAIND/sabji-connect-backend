@@ -28,7 +28,7 @@ from app.api.auth.schemas import (
 class AuthService:
     @staticmethod
     def serialize_user(user: User) -> UserResponse:
-        if user.role == "Admin":
+        if user.role == UserRole.ADMIN:
             return UserResponse(
                 id=str(user.id),
                 email=user.email,
@@ -111,7 +111,7 @@ class AuthService:
 
     @staticmethod
     async def admin_create_user(admin: User, body: CreateUserRequest) -> UserResponse:
-        if admin.role != "Admin":
+        if admin.role != UserRole.ADMIN:
             raise BadRequestError("Only Admin can create users")
 
         existing = await User.find_one(User.email == body.email)
@@ -133,7 +133,7 @@ class AuthService:
     async def list_users(unassigned_only: bool = False) -> list[UserResponse]:
         if unassigned_only:
             users = await User.find(
-                User.role != "Admin",
+                User.role != UserRole.ADMIN,
                 User.family_id == None,
                 {"$or": [{"family_ids": {"$size": 0}}, {"family_ids": []}, {"family_ids": None}]},
                 User.is_active == True,
@@ -154,7 +154,7 @@ class AuthService:
             update_data["display_name"] = body.display_name.strip()
         if body.role is not None:
             update_data["role"] = body.role
-            if body.role == "Admin":
+            if body.role == UserRole.ADMIN:
                 update_data["family_ids"] = []
                 update_data["family_id"] = None
         if body.email is not None and body.email != user.email:
