@@ -1,20 +1,17 @@
-﻿"""CatalogItem model — maps to the 'catalog' collection in MongoDB."""
+"""CatalogItem model — maps to the 'catalog' collection in MongoDB."""
 
-from datetime import datetime, timezone
 from typing import Optional
-
-from beanie import Document
 from pydantic import Field
+from app.models.base import BaseDocument
+from app.models.enums import ItemCategory, ItemUnit
 
 
-class CatalogItem(Document):
+class CatalogItem(BaseDocument):
     name: str
-    category: str = "Vegetables"
-    allowed_units: list[str] = Field(default_factory=lambda: ["pieces"])
+    category: ItemCategory = ItemCategory.VEGETABLES
+    allowed_units: list[ItemUnit] = Field(default_factory=lambda: [ItemUnit.PIECES])
     image_url: Optional[str] = None
     is_active: bool = True
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     class Settings:
         name = "catalog"

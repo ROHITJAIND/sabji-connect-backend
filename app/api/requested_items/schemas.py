@@ -2,6 +2,7 @@
 
 from typing import Optional
 from pydantic import BaseModel, Field
+from app.models.enums import ItemCategory, ItemUnit, RequestedItemStatus
 
 
 class CreateRequestedItemRequest(BaseModel):
@@ -9,8 +10,8 @@ class CreateRequestedItemRequest(BaseModel):
 
 
 class ApproveRequestedItemRequest(BaseModel):
-    category: str = "Vegetables"
-    allowed_units: list[str] = Field(default_factory=lambda: ["pieces"])
+    category: ItemCategory = ItemCategory.VEGETABLES
+    allowed_units: list[ItemUnit] = Field(default_factory=lambda: [ItemUnit.PIECES])
 
 
 class RequestedItemResponse(BaseModel):
@@ -19,5 +20,5 @@ class RequestedItemResponse(BaseModel):
     requestedBy: str
     requestedById: str
     familyId: Optional[str] = None
-    status: str
+    status: RequestedItemStatus
     createdAt: Optional[str] = None

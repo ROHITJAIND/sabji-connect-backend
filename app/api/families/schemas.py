@@ -2,6 +2,7 @@
 
 from typing import Optional
 from pydantic import BaseModel
+from app.models.enums import UserRole
 
 
 class CreateFamilyRequest(BaseModel):
@@ -19,12 +20,13 @@ class AddMemberToFamilyRequest(BaseModel):
 class FamilyResponse(BaseModel):
     id: str
     name: str
+    members: list[str] = []
 
 
 class FamilyMemberResponse(BaseModel):
     id: str
     email: str
     displayName: str
-    role: str
+    role: UserRole
     avatarUrl: Optional[str] = None
     isActive: bool = True

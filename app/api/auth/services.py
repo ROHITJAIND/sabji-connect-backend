@@ -13,6 +13,7 @@ from app.core.auth.jwt import (
     verify_password,
 )
 from app.core.exceptions import AuthenticationError, BadRequestError, ConflictError, NotFoundError
+from app.models.enums import UserRole
 from app.models.user import User
 from app.api.auth.schemas import (
     AdminUpdateUserRequest,

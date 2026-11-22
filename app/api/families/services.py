@@ -31,20 +31,29 @@ class FamilyService:
             obj_ids = [PydanticObjectId(fid) for fid in fids if PydanticObjectId.is_valid(fid)]
             families = await Family.find({"_id": {"$in": obj_ids}}).to_list()
 
-        return [FamilyResponse(id=str(f.id), name=f.name) for f in families]
+        return [FamilyResponse(id=str(f.id), name=f.name, members=[str(m) for m in (f.members or [])]) for f in families]
 
     @staticmethod
     async def create_family(body: CreateFamilyRequest, admin: User) -> FamilyResponse:
-        family = Family(name=body.name, created_by=str(admin.id))
+        family = Family(
+            name=body.name,
+            created_by=admin.id,
+            updated_by=admin.id,
+            members=[],
+        )
         await family.insert()
-        return FamilyResponse(id=str(family.id), name=family.name)
+        return FamilyResponse(id=str(family.id), name=family.name, members=[])
 
     @staticmethod
     async def get_family(family_id: str) -> FamilyResponse:
         family = await Family.get(PydanticObjectId(family_id))
         if not family:
             raise NotFoundError("Family not found")
-        return FamilyResponse(id=str(family.id), name=family.name)
+        return FamilyResponse(
+            id=str(family.id),
+            name=family.name,
+            members=[str(m) for m in (family.members or [])],
+        )
 
     @staticmethod
     async def update_family(family_id: str, body: UpdateFamilyRequest) -> FamilyResponse:
@@ -54,12 +63,28 @@ class FamilyService:
         family.name = body.name.strip()
         family.updated_at = datetime.now(timezone.utc)
         await family.save()
-        return FamilyResponse(id=str(family.id), name=family.name)
+        return FamilyResponse(
+            id=str(family.id),
+            name=family.name,
+            members=[str(m) for m in (family.members or [])],
+        )
 
     @staticmethod
     async def get_family_members(family_id: str) -> list[FamilyMemberResponse]:
+        family = await Family.get(PydanticObjectId(family_id))
+        if not family:
+            raise NotFoundError("Family not found")
+
+        member_oids = family.members or []
         members = await User.find(
-            {"$or": [{"family_ids": family_id}, {"family_id": family_id}], "is_active": True}
+            {
+                "$or": [
+                    {"_id": {"$in": member_oids}},
+                    {"family_ids": family_id},
+                    {"family_id": family_id},
+                ],
+                "is_active": True,
+            }
         ).to_list()
         return [
             FamilyMemberResponse(
@@ -87,6 +112,16 @@ class FamilyService:
         if user.role == "Admin":
             raise BadRequestError("Admins cannot be assigned to a specific family; they have global access to all families.")
 
+        # Update Family members list with user's ObjectId
+        user_oid = user.id if isinstance(user.id, PydanticObjectId) else PydanticObjectId(str(user.id))
+        fam_members = list(family.members or [])
+        if user_oid not in fam_members:
+            fam_members.append(user_oid)
+            family.members = fam_members
+            family.updated_at = datetime.now(timezone.utc)
+            await family.save()
+
+        # Update User's family_ids list
         fids = list(user.family_ids or [])
         if user.family_id and user.family_id not in fids:
             fids.append(user.family_id)
@@ -116,6 +151,16 @@ class FamilyService:
         if not member:
             raise NotFoundError("User not found")
 
+        # Update Family members list
+        family = await Family.get(PydanticObjectId(family_id))
+        if family:
+            user_oid = member.id if isinstance(member.id, PydanticObjectId) else PydanticObjectId(str(member.id))
+            fam_members = [m for m in (family.members or []) if m != user_oid]
+            family.members = fam_members
+            family.updated_at = datetime.now(timezone.utc)
+            await family.save()
+
+        # Update User's family_ids list
         fids = [f for f in (member.family_ids or []) if f != family_id]
         new_primary = fids[0] if fids else None
 

@@ -2,6 +2,7 @@
 
 from typing import Optional
 from pydantic import BaseModel, EmailStr
+from app.models.enums import UserRole
 
 
 class LoginRequest(BaseModel):
@@ -13,12 +14,12 @@ class CreateUserRequest(BaseModel):
     email: EmailStr
     password: str
     display_name: str = ""
-    role: str = "Hukum"  # Admin | Hukum | Sethji
+    role: UserRole = UserRole.HUKUM
 
 
 class AdminUpdateUserRequest(BaseModel):
     display_name: Optional[str] = None
-    role: Optional[str] = None  # Admin | Hukum | Sethji
+    role: Optional[UserRole] = None
     email: Optional[EmailStr] = None
     password: Optional[str] = None
     is_active: Optional[bool] = None
@@ -38,7 +39,7 @@ class UserResponse(BaseModel):
     id: str
     email: str
     display_name: str
-    role: str
+    role: UserRole
     family_ids: list[str] = []
     family_id: Optional[str] = None
     avatar_url: Optional[str] = None
@@ -50,5 +51,3 @@ class UpdateProfileRequest(BaseModel):
     avatar_url: Optional[str] = None
     fcm_token: Optional[str] = None
     family_id: Optional[str] = None  # Active family switcher
-    avatar_url: Optional[str] = None
-    fcm_token: Optional[str] = None

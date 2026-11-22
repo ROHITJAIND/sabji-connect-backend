@@ -14,6 +14,7 @@ from jose import JWTError
 
 from app.core.auth.jwt import decode_token
 from app.core.exceptions import AuthenticationError, NotAuthorizedError
+from app.models.enums import UserRole
 from app.models.user import User
 
 # Standard HTTP Bearer scheme -> enables Swagger UI "Authorize 🔓" button
@@ -56,17 +57,19 @@ async def get_current_user(
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
-def require_role(*allowed_roles: str):
+def require_role(*allowed_roles: str | UserRole):
     """Factory that returns a dependency enforcing role-based access.
 
     Usage:
-        @router.get("/admin-only", dependencies=[Depends(require_role("Admin"))])
+        @router.get("/admin-only", dependencies=[Depends(require_role(UserRole.ADMIN))])
     """
+    valid_roles = {r.value if isinstance(r, UserRole) else str(r) for r in allowed_roles}
 
     async def _check(user: CurrentUser) -> User:
-        if user.role not in allowed_roles:
+        user_role_str = user.role.value if isinstance(user.role, UserRole) else str(user.role)
+        if user_role_str not in valid_roles:
             raise NotAuthorizedError(
-                f"This action requires one of: {', '.join(allowed_roles)}"
+                f"This action requires one of: {', '.join(sorted(valid_roles))}"
             )
         return user
 
