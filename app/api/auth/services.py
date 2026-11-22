@@ -1,4 +1,4 @@
-﻿"""Auth services — business logic and DB operations."""
+"""Auth services — business logic and DB operations."""
 
 from datetime import datetime, timezone
 from typing import Optional

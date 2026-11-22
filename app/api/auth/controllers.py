@@ -1,4 +1,4 @@
-﻿"""Auth controllers — handles HTTP request/response orchestration."""
+"""Auth controllers — handles HTTP request/response orchestration."""
 
 from app.api.auth.schemas import (
     AdminUpdateUserRequest,

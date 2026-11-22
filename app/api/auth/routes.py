@@ -1,4 +1,4 @@
-﻿"""Auth routes — HTTP endpoint definitions."""
+"""Auth routes — HTTP endpoint definitions."""
 
 from fastapi import APIRouter, Depends, Query
 

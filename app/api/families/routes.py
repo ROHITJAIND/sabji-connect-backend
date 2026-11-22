@@ -1,4 +1,4 @@
-﻿"""Family routes."""
+"""Family routes."""
 
 from fastapi import APIRouter, Depends
 
@@ -9,7 +9,6 @@ from app.api.families.schemas import (
     FamilyMemberResponse,
     FamilyResponse,
     UpdateFamilyRequest,
-    UpdateMemberRoleRequest,
 )
 from app.core.auth.dependencies import CurrentUser, require_role
 
@@ -50,12 +49,6 @@ async def get_family_members(family_id: str, user: CurrentUser):
 async def add_member_to_family(family_id: str, body: AddMemberToFamilyRequest):
     """Admin-only: Add a user to a family (updates user's family_id)."""
     return await FamilyController.add_member(family_id, body)
-
-
-@router.patch("/{family_id}/members/{user_id}", dependencies=[Depends(require_role("Admin"))])
-async def update_member_role(family_id: str, user_id: str, body: UpdateMemberRoleRequest):
-    """Admin-only: Change a member's role within the family."""
-    return await FamilyController.update_member_role(family_id, user_id, body)
 
 
 @router.delete("/{family_id}/members/{user_id}", dependencies=[Depends(require_role("Admin"))])
