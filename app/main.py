@@ -57,6 +57,15 @@ def create_application() -> FastAPI:
     setup_cors(app)
     app.add_middleware(RequestLoggerMiddleware)
 
+    @app.middleware("http")
+    async def add_no_cache_headers(request, call_next):
+        response = await call_next(request)
+        if request.url.path.startswith("/api"):
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        return response
+
     # Exception handlers
     app.add_exception_handler(RequestValidationError, ERROR_HANDLER.handle_validation_error)
     app.add_exception_handler(AppError, ERROR_HANDLER.handle_app_error)
