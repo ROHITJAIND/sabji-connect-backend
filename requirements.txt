@@ -1,0 +1,25 @@
+# Sabji Connect — Python Backend Dependencies
+
+# ── Web Framework ────────────────────────────────
+fastapi[standard]==0.115.*
+uvicorn[standard]==0.34.*
+
+# ── MongoDB ──────────────────────────────────────
+pymongo==4.12.*
+beanie==1.27.*
+certifi
+
+# ── Auth ─────────────────────────────────────────
+python-jose[cryptography]==3.3.*
+passlib[bcrypt]==1.7.*
+bcrypt==4.2.*
+
+# ── Configuration ────────────────────────────────
+pydantic[email]==2.*
+pydantic-settings==2.*
+
+# ── Cloudinary (image uploads) ───────────────────
+cloudinary==1.*
+
+# ── Utilities ────────────────────────────────────
+python-multipart==0.0.*
