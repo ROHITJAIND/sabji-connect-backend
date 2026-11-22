@@ -1,6 +1,7 @@
 ﻿"""Auth controllers — handles HTTP request/response orchestration."""
 
 from app.api.auth.schemas import (
+    AdminUpdateUserRequest,
     CreateUserRequest,
     LoginRequest,
     RefreshRequest,
@@ -36,3 +37,11 @@ class AuthController:
     @staticmethod
     async def list_users(unassigned_only: bool = False) -> list[UserResponse]:
         return await AuthService.list_users(unassigned_only)
+
+    @staticmethod
+    async def admin_update_user(user_id: str, body: AdminUpdateUserRequest) -> UserResponse:
+        return await AuthService.admin_update_user(user_id, body)
+
+    @staticmethod
+    async def admin_delete_user(user_id: str) -> dict:
+        return await AuthService.admin_delete_user(user_id)

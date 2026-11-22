@@ -17,6 +17,15 @@ class CreateUserRequest(BaseModel):
     family_id: Optional[str] = None
 
 
+class AdminUpdateUserRequest(BaseModel):
+    display_name: Optional[str] = None
+    role: Optional[str] = None  # Admin | Hukum | Sethji
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
+    family_id: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str

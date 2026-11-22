@@ -8,6 +8,10 @@ class CreateFamilyRequest(BaseModel):
     name: str
 
 
+class UpdateFamilyRequest(BaseModel):
+    name: str
+
+
 class AddMemberToFamilyRequest(BaseModel):
     user_id: str
     role: Optional[str] = None  # e.g. "Hukum" or "Sethji" (optional, keeps existing role if omitted)

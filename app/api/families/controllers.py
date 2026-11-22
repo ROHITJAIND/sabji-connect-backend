@@ -5,6 +5,7 @@ from app.api.families.schemas import (
     CreateFamilyRequest,
     FamilyMemberResponse,
     FamilyResponse,
+    UpdateFamilyRequest,
     UpdateMemberRoleRequest,
 )
 from app.api.families.services import FamilyService
@@ -23,6 +24,10 @@ class FamilyController:
     @staticmethod
     async def get_family(family_id: str) -> FamilyResponse:
         return await FamilyService.get_family(family_id)
+
+    @staticmethod
+    async def update_family(family_id: str, body: UpdateFamilyRequest) -> FamilyResponse:
+        return await FamilyService.update_family(family_id, body)
 
     @staticmethod
     async def get_family_members(family_id: str) -> list[FamilyMemberResponse]:

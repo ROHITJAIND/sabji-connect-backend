@@ -8,6 +8,7 @@ from app.api.families.schemas import (
     CreateFamilyRequest,
     FamilyMemberResponse,
     FamilyResponse,
+    UpdateFamilyRequest,
     UpdateMemberRoleRequest,
 )
 from app.core.auth.dependencies import CurrentUser, require_role
@@ -31,6 +32,12 @@ async def create_family(body: CreateFamilyRequest, admin: CurrentUser):
 async def get_family(family_id: str, user: CurrentUser):
     """Get family details by family_id."""
     return await FamilyController.get_family(family_id)
+
+
+@router.patch("/{family_id}", response_model=FamilyResponse, dependencies=[Depends(require_role("Admin"))])
+async def update_family(family_id: str, body: UpdateFamilyRequest):
+    """Admin-only: Update family name."""
+    return await FamilyController.update_family(family_id, body)
 
 
 @router.get("/{family_id}/members", response_model=list[FamilyMemberResponse])

@@ -10,6 +10,7 @@ from app.api.families.schemas import (
     CreateFamilyRequest,
     FamilyMemberResponse,
     FamilyResponse,
+    UpdateFamilyRequest,
     UpdateMemberRoleRequest,
 )
 from app.core.exceptions import NotFoundError
@@ -41,6 +42,16 @@ class FamilyService:
         family = await Family.get(PydanticObjectId(family_id))
         if not family:
             raise NotFoundError("Family not found")
+        return FamilyResponse(id=str(family.id), name=family.name)
+
+    @staticmethod
+    async def update_family(family_id: str, body: UpdateFamilyRequest) -> FamilyResponse:
+        family = await Family.get(PydanticObjectId(family_id))
+        if not family:
+            raise NotFoundError("Family not found")
+        family.name = body.name.strip()
+        family.updated_at = datetime.now(timezone.utc)
+        await family.save()
         return FamilyResponse(id=str(family.id), name=family.name)
 
     @staticmethod

@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.api.auth.controllers import AuthController
 from app.api.auth.schemas import (
+    AdminUpdateUserRequest,
     CreateUserRequest,
     LoginRequest,
     RefreshRequest,
@@ -50,3 +51,15 @@ async def admin_create_user(body: CreateUserRequest, admin: CurrentUser):
 async def list_users(unassigned_only: bool = Query(False, description="Filter for users not assigned to any family")):
     """Admin-only: List users (can filter for unassigned users to add to a family)."""
     return await AuthController.list_users(unassigned_only)
+
+
+@router.patch("/users/{user_id}", response_model=UserResponse, dependencies=[Depends(require_role("Admin"))])
+async def admin_update_user(user_id: str, body: AdminUpdateUserRequest):
+    """Admin-only: Update user details."""
+    return await AuthController.admin_update_user(user_id, body)
+
+
+@router.delete("/users/{user_id}", dependencies=[Depends(require_role("Admin"))])
+async def admin_delete_user(user_id: str):
+    """Admin-only: Delete a user."""
+    return await AuthController.admin_delete_user(user_id)

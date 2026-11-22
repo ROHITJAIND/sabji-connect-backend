@@ -12,9 +12,10 @@ from app.core.auth.jwt import (
     hash_password,
     verify_password,
 )
-from app.core.exceptions import AuthenticationError, BadRequestError, ConflictError
+from app.core.exceptions import AuthenticationError, BadRequestError, ConflictError, NotFoundError
 from app.models.user import User
 from app.api.auth.schemas import (
+    AdminUpdateUserRequest,
     CreateUserRequest,
     LoginRequest,
     TokenResponse,
@@ -115,3 +116,41 @@ class AuthService:
             users = await User.find(User.is_active == True).to_list()
 
         return [AuthService.serialize_user(u) for u in users]
+
+    @staticmethod
+    async def admin_update_user(user_id: str, body: AdminUpdateUserRequest) -> UserResponse:
+        user = await User.get(PydanticObjectId(user_id))
+        if not user:
+            raise NotFoundError("User not found")
+
+        update_data = {}
+        if body.display_name is not None and body.display_name.strip():
+            update_data["display_name"] = body.display_name.strip()
+        if body.role is not None:
+            update_data["role"] = body.role
+        if body.email is not None and body.email != user.email:
+            existing = await User.find_one(User.email == body.email)
+            if existing:
+                raise ConflictError("A user with this email already exists")
+            update_data["email"] = body.email
+        if body.password is not None and body.password.strip():
+            update_data["hashed_password"] = hash_password(body.password.strip())
+        if body.family_id is not None:
+            update_data["family_id"] = body.family_id.strip() if body.family_id.strip() else None
+        if body.is_active is not None:
+            update_data["is_active"] = body.is_active
+
+        if update_data:
+            update_data["updated_at"] = datetime.now(timezone.utc)
+            await user.set(update_data)
+
+        return AuthService.serialize_user(user)
+
+    @staticmethod
+    async def admin_delete_user(user_id: str) -> dict:
+        user = await User.get(PydanticObjectId(user_id))
+        if not user:
+            raise NotFoundError("User not found")
+
+        await user.delete()
+        return {"id": user_id, "message": "User deleted successfully"}
