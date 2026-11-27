@@ -23,11 +23,11 @@ class OrderService:
             id=str(order.id),
             status=order.status,
             items=[item.model_dump() for item in order.items],
-            createdBy=order.created_by,
-            createdByName=order.created_by_name,
-            familyId=order.family_id,
-            orderDate=order.order_date,
-            fulfilledBy=order.fulfilled_by,
+            createdBy=str(order.created_by) if order.created_by else "",
+            createdByName=order.created_by_name or "",
+            familyId=str(order.family_id) if order.family_id else None,
+            orderDate=order.order_date or "",
+            fulfilledBy=str(order.fulfilled_by) if order.fulfilled_by else None,
             publishTrigger=order.publish_trigger,
             createdAt=order.created_at.isoformat() if order.created_at else None,
             updatedAt=order.updated_at.isoformat() if order.updated_at else None,
@@ -39,8 +39,8 @@ class OrderService:
             orders = await Order.find_all().to_list()
         elif user.role == UserRole.SETHJI:
             filters = {"status": {"$in": [OrderStatus.PUBLISHED, OrderStatus.FULFILLING, OrderStatus.ARCHIVED]}}
-            if user.family_id:
-                filters["family_id"] = user.family_id
+            if user.family_ids:
+                filters["family_id"] = {"$in": user.family_ids}
             orders = await Order.find(filters).to_list()
         else:
             orders = await Order.find(Order.created_by == str(user.id)).to_list()
@@ -54,12 +54,17 @@ class OrderService:
             if body and body.order_date
             else datetime.now(timezone.utc).strftime("%Y-%m-%d")
         )
+        order_family_id = (
+            body.family_id
+            if body and body.family_id
+            else (user.family_ids[0] if user.family_ids else None)
+        )
         order = Order(
             status=OrderStatus.DRAFT,
             items=[],
             created_by=str(user.id),
             created_by_name=user.display_name or user.email.split("@")[0],
-            family_id=user.family_id,
+            family_id=order_family_id,
             order_date=order_date,
         )
         await order.insert()

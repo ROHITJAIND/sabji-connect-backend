@@ -1,6 +1,7 @@
 """Order model — maps to the 'orders' collection in MongoDB."""
 
 from typing import Optional
+from beanie import Document
 from pydantic import BaseModel, Field
 from app.models.base import BaseDocument
 from app.models.enums import ItemUnit, OrderStatus
@@ -19,7 +20,7 @@ class OrderItem(BaseModel):
     image_url: Optional[str] = None
 
 
-class Order(BaseDocument):
+class Order(Document, BaseDocument):
     status: OrderStatus = OrderStatus.DRAFT
     items: list[OrderItem] = Field(default_factory=list)
     created_by_name: str = "Family Member"

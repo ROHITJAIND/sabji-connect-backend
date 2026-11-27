@@ -25,8 +25,9 @@ class FamilyResponse(BaseModel):
 
 class FamilyMemberResponse(BaseModel):
     id: str
-    email: str
+    username: str
     displayName: str
     role: UserRole
+    email: Optional[str] = None
     avatarUrl: Optional[str] = None
     isActive: bool = True

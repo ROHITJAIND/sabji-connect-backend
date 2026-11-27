@@ -1,17 +1,16 @@
-"""Base model for all Beanie MongoDB documents in Sabji Connect."""
+"""Base model for all MongoDB documents in Sabji Connect."""
 
 from datetime import datetime, timezone
 from typing import Optional
 from bson import ObjectId
-from beanie import Document, PydanticObjectId
-from pydantic import Field, field_validator
+from beanie import PydanticObjectId
+from pydantic import BaseModel, Field, field_validator
 
 
-class BaseDocument(Document):
+class BaseDocument(BaseModel):
     """
-    Base document inherited by all collection models.
+    Base model inherited by all collection models.
     Provides:
-      - id: _id as PydanticObjectId (MongoDB BSON ObjectId)
       - created_by: PydanticObjectId (MongoDB BSON ObjectId)
       - updated_by: PydanticObjectId (MongoDB BSON ObjectId)
       - created_at: ISODate (Python datetime UTC)
@@ -33,6 +32,3 @@ class BaseDocument(Document):
         if isinstance(v, str) and PydanticObjectId.is_valid(v):
             return PydanticObjectId(v)
         return None
-
-    class Settings:
-        is_root = True

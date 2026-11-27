@@ -1,4 +1,4 @@
-﻿"""API router aggregation — imports each domain module router."""
+"""API router aggregation — imports each domain module router."""
 
 from fastapi import APIRouter
 
@@ -13,6 +13,7 @@ from app.api.websocket.routes import router as websocket_router
 # Base router for root / health check (mounted at root level)
 base_router = APIRouter()
 base_router.include_router(health_router)
+base_router.include_router(websocket_router)
 
 # API router — all domain endpoints mounted with /api prefix
 api_router = APIRouter()

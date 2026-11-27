@@ -19,6 +19,7 @@ class OrderItemSchema(BaseModel):
 
 class CreateOrderRequest(BaseModel):
     order_date: Optional[str] = None
+    family_id: Optional[str] = None
 
 
 class OrderResponse(BaseModel):

@@ -1,12 +1,12 @@
-﻿"""Family model — maps to the 'families' collection in MongoDB."""
+"""Family model — maps to the 'families' collection in MongoDB."""
 
 from bson import ObjectId
-from beanie import PydanticObjectId
+from beanie import Document, PydanticObjectId
 from pydantic import Field, field_validator
 from app.models.base import BaseDocument
 
 
-class Family(BaseDocument):
+class Family(Document, BaseDocument):
     name: str
     members: list[PydanticObjectId] = Field(default_factory=list)
 
@@ -25,11 +25,3 @@ class Family(BaseDocument):
 
     class Settings:
         name = "families"
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "name": "Shah Family",
-                "members": ["664b1f8e7a9b2c001f3e4d5a"],
-            }
-        }

@@ -1,11 +1,12 @@
 """RequestedItem model — maps to the 'requested_items' collection in MongoDB."""
 
 from typing import Optional
+from beanie import Document
 from app.models.base import BaseDocument
 from app.models.enums import RequestedItemStatus
 
 
-class RequestedItem(BaseDocument):
+class RequestedItem(Document, BaseDocument):
     name: str
     requested_by: str  # Display name of the requester
     requested_by_id: str  # User ID

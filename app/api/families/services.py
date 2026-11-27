@@ -25,8 +25,6 @@ class FamilyService:
             families = await Family.find_all().to_list()
         else:
             fids = list(user.family_ids or [])
-            if user.family_id and user.family_id not in fids:
-                fids.append(user.family_id)
             if not fids:
                 return []
             obj_ids = [PydanticObjectId(fid) for fid in fids if PydanticObjectId.is_valid(fid)]
@@ -82,7 +80,6 @@ class FamilyService:
                 "$or": [
                     {"_id": {"$in": member_oids}},
                     {"family_ids": family_id},
-                    {"family_id": family_id},
                 ],
                 "is_active": True,
             }
@@ -90,8 +87,9 @@ class FamilyService:
         return [
             FamilyMemberResponse(
                 id=str(m.id),
-                email=m.email,
-                displayName=m.display_name,
+                username=getattr(m, "username", None) or (m.email.split("@")[0] if getattr(m, "email", None) else "user"),
+                email=getattr(m, "email", None),
+                displayName=m.display_name or getattr(m, "username", None) or "User",
                 role=m.role,
                 avatarUrl=m.avatar_url,
                 isActive=m.is_active,
@@ -124,23 +122,22 @@ class FamilyService:
 
         # Update User's family_ids list
         fids = list(user.family_ids or [])
-        if user.family_id and user.family_id not in fids:
-            fids.append(user.family_id)
         if family_id not in fids:
             fids.append(family_id)
 
         await user.set(
             {
                 "family_ids": fids,
-                "family_id": family_id,
                 "updated_at": datetime.now(timezone.utc),
             }
         )
 
+        uname = getattr(user, "username", None) or (user.email.split("@")[0] if getattr(user, "email", None) else "user")
         return FamilyMemberResponse(
             id=str(user.id),
-            email=user.email,
-            displayName=user.display_name,
+            username=uname,
+            email=getattr(user, "email", None),
+            displayName=user.display_name or uname,
             role=user.role,
             avatarUrl=user.avatar_url,
             isActive=user.is_active,
@@ -163,12 +160,10 @@ class FamilyService:
 
         # Update User's family_ids list
         fids = [f for f in (member.family_ids or []) if f != family_id]
-        new_primary = fids[0] if fids else None
 
         await member.set(
             {
                 "family_ids": fids,
-                "family_id": new_primary,
                 "updated_at": datetime.now(timezone.utc),
             }
         )
@@ -180,15 +175,11 @@ class FamilyService:
         if not family:
             raise NotFoundError("Family not found")
 
-        affected_users = await User.find(
-            {"$or": [{"family_ids": family_id}, {"family_id": family_id}]}
-        ).to_list()
+        affected_users = await User.find({"family_ids": family_id}).to_list()
         for m in affected_users:
             fids = [f for f in (m.family_ids or []) if f != family_id]
-            new_primary = fids[0] if fids else None
             await m.set({
                 "family_ids": fids,
-                "family_id": new_primary,
                 "updated_at": datetime.now(timezone.utc),
             })
 
