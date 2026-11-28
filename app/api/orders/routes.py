@@ -1,4 +1,4 @@
-﻿"""Order routes."""
+"""Order routes."""
 
 from typing import Optional
 
@@ -32,7 +32,7 @@ async def get_order(order_id: str, user: CurrentUser):
 @router.patch("/{order_id}", response_model=OrderResponse)
 async def update_order(order_id: str, body: dict, user: CurrentUser):
     """Update order fields (status, items, etc.)."""
-    return await OrderController.update_order(order_id, body)
+    return await OrderController.update_order(order_id, body, user)
 
 
 @router.delete("/{order_id}")

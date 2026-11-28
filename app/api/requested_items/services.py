@@ -42,9 +42,15 @@ class RequestedItemService:
 
     @staticmethod
     async def request_item(user: User, body: CreateRequestedItemRequest) -> dict:
+        req_by = (
+            user.display_name
+            or (user.email.split("@")[0] if user.email else None)
+            or getattr(user, "username", None)
+            or "User"
+        )
         item = RequestedItem(
             name=body.name,
-            requested_by=user.display_name or user.email.split("@")[0],
+            requested_by=req_by,
             requested_by_id=str(user.id),
             family_id=user.family_ids[0] if user.family_ids else None,
             status=RequestedItemStatus.PENDING,

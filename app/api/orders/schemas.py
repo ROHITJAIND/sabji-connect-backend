@@ -6,20 +6,19 @@ from app.models.enums import ItemUnit, OrderStatus
 
 
 class OrderItemSchema(BaseModel):
-    catalog_item_id: str
+    catalog_item_id: Optional[str] = None
     name: str
-    quantity: float = 1
-    unit: ItemUnit = ItemUnit.PIECES
-    is_purchased: bool = False
-    actual_quantity: Optional[float] = None
-    actual_price: Optional[float] = None
-    is_out_of_stock: bool = False
-    image_url: Optional[str] = None
+    qty: Optional[float] = None
+    unit: Optional[str] = "pieces"
+    status: str = "pending"
 
 
 class CreateOrderRequest(BaseModel):
     order_date: Optional[str] = None
     family_id: Optional[str] = None
+    items: Optional[list[dict[str, Any]]] = None
+    status: Optional[OrderStatus] = None
+    publish_trigger: Optional[str] = None
 
 
 class OrderResponse(BaseModel):
@@ -32,5 +31,7 @@ class OrderResponse(BaseModel):
     orderDate: str
     fulfilledBy: Optional[str] = None
     publishTrigger: Optional[str] = None
+    totalExpense: Optional[float] = 0.0
+    batchId: Optional[str] = None
     createdAt: Optional[str] = None
     updatedAt: Optional[str] = None

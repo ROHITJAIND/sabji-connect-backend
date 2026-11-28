@@ -1,23 +1,41 @@
 """Order model — maps to the 'orders' collection in MongoDB."""
 
-from typing import Optional
-from beanie import Document
-from pydantic import BaseModel, Field
+from typing import Any, Optional
+from beanie import Document, PydanticObjectId
+from pydantic import BaseModel, Field, model_validator
 from app.models.base import BaseDocument
-from app.models.enums import ItemUnit, OrderStatus
+from app.models.enums import OrderStatus
 
 
 class OrderItem(BaseModel):
     """An individual item within an order."""
-    catalog_item_id: str
+    catalog_item_id: Optional[PydanticObjectId] = None
     name: str
-    quantity: float = 1
-    unit: ItemUnit = ItemUnit.PIECES
-    is_purchased: bool = False
-    actual_quantity: Optional[float] = None
-    actual_price: Optional[float] = None
-    is_out_of_stock: bool = False
-    image_url: Optional[str] = None
+    qty: Optional[float] = None
+    unit: Optional[str] = "pieces"
+    status: str = "pending"
+
+    @model_validator(mode="before")
+    @classmethod
+    def clean_item_fields(cls, data: Any):
+        if isinstance(data, dict):
+            cid = data.get("catalog_item_id") or data.get("catalogId")
+            if cid:
+                try:
+                    cid = PydanticObjectId(str(cid))
+                except Exception:
+                    cid = None
+            qty = data.get("qty")
+            if qty is None and "quantity" in data:
+                qty = data["quantity"]
+            return {
+                "catalog_item_id": cid,
+                "name": data.get("name") or "",
+                "qty": qty,
+                "unit": data.get("unit") or "pieces",
+                "status": data.get("status") or "pending",
+            }
+        return data
 
 
 class Order(Document, BaseDocument):
@@ -28,6 +46,8 @@ class Order(Document, BaseDocument):
     order_date: str = ""  # ISO date string YYYY-MM-DD
     fulfilled_by: Optional[str] = None  # User ID of Sethji
     publish_trigger: Optional[str] = None  # Timestamp for push notification dedup
+    total_expense: Optional[float] = 0.0
+    batch_id: Optional[str] = None
 
     class Settings:
         name = "orders"

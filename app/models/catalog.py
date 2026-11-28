@@ -16,13 +16,3 @@ class CatalogItem(Document, BaseDocument):
 
     class Settings:
         name = "catalog"
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "name": "Tomato",
-                "category": "Vegetables",
-                "allowed_units": ["kg", "pieces"],
-                "image_url": "https://res.cloudinary.com/demo/image/upload/tomato.jpg",
-            }
-        }

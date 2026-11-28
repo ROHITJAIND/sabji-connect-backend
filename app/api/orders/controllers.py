@@ -1,4 +1,4 @@
-﻿"""Order controller — delegates to OrderService."""
+"""Order controller — delegates to OrderService."""
 
 from typing import Optional
 
@@ -21,8 +21,8 @@ class OrderController:
         return await OrderService.get_order(order_id)
 
     @staticmethod
-    async def update_order(order_id: str, body: dict) -> OrderResponse:
-        return await OrderService.update_order(order_id, body)
+    async def update_order(order_id: str, body: dict, user: User) -> OrderResponse:
+        return await OrderService.update_order(order_id, body, user)
 
     @staticmethod
     async def delete_order(order_id: str, user: User) -> dict:
